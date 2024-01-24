@@ -3,7 +3,6 @@ import pandas as pd
 import duckdb
 import io
 
-
 csv = """
 beverage,price
 orange juice,2.5
@@ -30,6 +29,17 @@ CROSS JOIN food_items
 
 # Dataframe de résultat, prendre cette query et la mettre dans Duckdb SQL
 solution = duckdb.sql(answer).df()
+
+
+with st.sidebar:
+    option = st.selectbox(
+       "What would you like to review?",
+       ["Joins", "GroupBy", "Windows Functions"],
+       index=None,
+       placeholder="Select a theme: ",
+    )
+    st.write('You selected:', option)
+
 
 st.header("Enter your code: ")
 query = st.text_area(label="Code SQL", key="user_input")
