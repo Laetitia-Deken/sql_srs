@@ -1,40 +1,53 @@
 import streamlit as st
 import pandas as pd
 import duckdb
+import io
 
-st.write("""
-# SQL SRS
-Spaced Repetition System SQL Practice
-""")
 
-option = st.selectbox(
-   "What would you like to review?",
-   ["Joins", "GroupBy", "Windows Functions"],
-   index=None,
-   placeholder="Select a theme: ",
-)
+csv = """
+beverage,price
+orange juice,2.5
+Expresso,2
+Tea,3
+"""
+beverages = pd.read_csv(io.StringIO(csv))
 
-st.write('You selected:', option)
+# Création de la donnée
+csv2 = """
+food_item,food_price
+cookie juice,2.5
+chocolatine,2
+muffin,3
+"""
+# Pandas dataframe
+food_items = pd.read_csv(io.StringIO(csv2))
 
-data = {"a": [1, 2, 3], "b": [4, 5, 6]}
-df = pd.DataFrame(data)
+# Ecriture de la réponse attendue par l'utilisateur pour que cela fonctionne
+answer = """
+SELECT * FROM beverages
+CROSS JOIN food_items
+"""
 
-tab1, tab2, tab3, tab4 = st.tabs(["SQL Query", "Cat", "Dog", "Owl"])
+# Dataframe de résultat, prendre cette query et la mettre dans Duckdb SQL
+solution = duckdb.sql(answer).df()
 
-with tab1:
-    sql_query = st.text_area(label="Write your query:")
-    result = duckdb.query(sql_query).df()
-    st.write(f"Your query is: {sql_query}")
+st.header("Enter your code: ")
+query = st.text_area(label="Code SQL", key="user_input")
+if query:
+    result = duckdb.sql(query).df()
     st.dataframe(result)
 
+tab2, tab3 = st.tabs(["Tables", "Solution"])
+
+# Tables que l'utilisateur a à disposition
 with tab2:
-    st.header("This is a cat.")
-    st.image("https://static.streamlit.io/examples/cat.jpg", width=400)
+    st.write("table: beverages")
+    st.dataframe(beverages)
+    st.write("table: food_items")
+    st.dataframe(food_items)
+    st.write("expected:")
+    st.dataframe(solution)
 
+# Table à part avec la réponse, qui permt de chacher
 with tab3:
-    st.header("This is a dog.")
-    st.image("https://static.streamlit.io/examples/dog.jpg", width=400)
-
-with tab4:
-    st.header("And this is an owl.")
-    st.image("https://static.streamlit.io/examples/owl.jpg", width=400)
+    st.write(answer)
