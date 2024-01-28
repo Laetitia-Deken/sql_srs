@@ -1,44 +1,46 @@
-import streamlit as st
-import pandas as pd
-import duckdb
+# pylint: disable=missing-module-docstring
 import io
 
-csv = """
+import duckdb
+import pandas as pd
+import streamlit as st
+
+CSV = """
 beverage,price
 orange juice,2.5
 Expresso,2
 Tea,3
 """
-beverages = pd.read_csv(io.StringIO(csv))
+beverages = pd.read_csv(io.StringIO(CSV))
 
 # Création de la donnée
-csv2 = """
+CSV2 = """
 food_item,food_price
 cookie juice,2.5
 chocolatine,2
 muffin,3
 """
 # Pandas dataframe
-food_items = pd.read_csv(io.StringIO(csv2))
+food_items = pd.read_csv(io.StringIO(CSV2))
 
 # Ecriture de la réponse attendue par l'utilisateur pour que cela fonctionne
-answer = """
+ANSWER_STR = """
 SELECT * FROM beverages
 CROSS JOIN food_items
 """
 
 # Dataframe de résultat, prendre cette query et la mettre dans Duckdb SQL
-solution = duckdb.sql(answer).df()
+solution_df = duckdb.sql(ANSWER_STR).df()
 
 
 with st.sidebar:
     option = st.selectbox(
-       "What would you like to review?",
-       ["Joins", "GroupBy", "Windows Functions"],
-       index=None,
-       placeholder="Select a theme: ",
+        "What would you like to review?",
+        ["Joins", "GroupBy", "Windows Functions"],
+        index=None,
+        placeholder="Select a theme: ",
     )
-    st.write('You selected:', option)
+    st.write("You selected:", option)
 
 
 st.header("Enter your code: ")
@@ -46,6 +48,22 @@ query = st.text_area(label="Code SQL", key="user_input")
 if query:
     result = duckdb.sql(query).df()
     st.dataframe(result)
+
+    # Mettre les colonnes du DF result dans le même ordre que celle de la solution pour les comparer
+    # Try = prévision d'une KeyError en fonction de ce qu'a écrit l'utilisateur
+    try:
+        result = result[[solution_df.columns]]
+        # Comparer notre résultat  avec la solution avec compare
+        st.dataframe(result.compare(solution_df))
+    except KeyError as e:
+        st.write("Some columns are missing")
+
+    # Compare le nombre de lignes de différence avec shape
+    n_lines_difference = result.shape[0] - solution_df.shape[0]
+    if n_lines_difference != 0:
+        st.write(
+            f"Your result has a {n_lines_difference} lines difference with the solution"
+        )
 
 tab2, tab3 = st.tabs(["Tables", "Solution"])
 
@@ -56,8 +74,8 @@ with tab2:
     st.write("table: food_items")
     st.dataframe(food_items)
     st.write("expected:")
-    st.dataframe(solution)
+    st.dataframe(solution_df)
 
-# Table à part avec la réponse, qui permt de chacher
+# Table à part avec la réponse, qui permet de chercher
 with tab3:
-    st.write(answer)
+    st.write(ANSWER_STR)
