@@ -1,2 +1,2 @@
 SELECT * FROM beverages
-CROSS JOIN coucou
+CROSS JOIN food_items

@@ -1,15 +1,11 @@
 # pylint: disable=missing-module-docstring
 import io
 
-import ast
 import duckdb
 import pandas as pd
 import streamlit as st
 
 con = duckdb.connect(database="data/exercices_sql_tables.duckdb", read_only=False)
-
-# Dataframe de résultat, prendre cette query et la mettre dans Duckdb SQL
-# solution_df = duckdb.sql(ANSWER_STR).df()
 
 
 with st.sidebar:
@@ -21,44 +17,53 @@ with st.sidebar:
     )
     st.write("You selected:", theme)
 
-    exercise = con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'").df()
+    exercise = con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'").df().sort_values("last_reviewed").reset_index()
     st.write(exercise)
 
+    if not exercise.empty:
+        exercise_name = exercise.loc[0, "exercise_name"]
+    else:
+        # Gérer le cas où le DataFrame est vide
+        print("Le DataFrame 'exercise' est vide.")
+        
+    with open(f"answers/{exercise_name}.sql", "r") as f:
+        answer = f.read()
+
+    # Dataframe de résultat, prendre cette query et la mettre dans Duckdb SQL
+    solution_df = con.execute(answer).df()
+
 st.header("Enter your code: ")
-query = st.text_area(label="Code SQL", key="user_input")
+query = st.text_area(label="Enter your code SQL here: ", key="user_input")
 if query:
     result = con.execute(query).df()
     st.dataframe(result)
-#
-#     # Mettre les colonnes du DF result dans le même ordre que celle de la solution pour les comparer
-#     # Try = prévision d'une KeyError en fonction de ce qu'à écrit l'utilisateur
-#     try:
-#         result = result[[solution_df.columns]]
-#         # Comparer notre résultat  avec la solution avec compare
-#         st.dataframe(result.compare(solution_df))
-#     except KeyError as e:
-#         st.write("Some columns are missing")
-#
-#     # Compare le nombre de lignes de différence avec shape
-#     n_lines_difference = result.shape[0] - solution_df.shape[0]
-#     if n_lines_difference != 0:
-#         st.write(
-#             f"Your result has a {n_lines_difference} lines difference with the solution"
-#         )
-#
+
+# Mettre les colonnes du DF result dans le même ordre que celle de la solution pour les comparer
+# Try = prévision d'une KeyError en fonction de ce qu'à écrit l'utilisateur
+    try:
+        result = result[solution_df.columns]
+# Comparer notre résultat avec la solution avec compare
+        st.dataframe(result.compare(solution_df))
+    except KeyError as e:
+        st.write("Some columns are missing")
+
+# Compare le nombre de lignes de différence avec shape
+    n_lines_difference = result.shape[0] - solution_df.shape[0]
+    if n_lines_difference != 0:
+        st.write(
+            f"Your result has a {n_lines_difference} lines difference with the solution"
+        )
+
 tab2, tab3 = st.tabs(["Tables", "Solution"])
-#
-# # Tables que l'utilisateur a à disposition
+
+# Tables que l'utilisateur a à disposition
 with tab2:
-    exercise_tables = ast.literal_eval(exercise.loc[0, "tables"])
+    exercise_tables = exercise.loc[0, "tables"]
     for table in exercise_tables:
         st.write(f"table: {table}")
         df_table = con.execute(f"SELECT * FROM {table}").df()
         st.dataframe(df_table)
 
-# # Table à part avec la réponse, qui permet de chercher
+# Table à part avec la réponse, qui permet de chercher
 with tab3:
-    exercise_name = exercise.loc[0, "exercise_name"]
-    with open(f"answers/{exercise_name}.sql", "r") as f:
-        answer = f.read()
     st.write(answer)
