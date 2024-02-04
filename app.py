@@ -1,4 +1,5 @@
 # pylint: disable=missing-module-docstring
+<<<<<<< HEAD
 
 import os
 import logging
@@ -40,6 +41,38 @@ with st.sidebar:
     with open(f"answers/{exercise_name}.sql", "r") as f:
         answer = f.read()
 
+=======
+import io
+
+import duckdb
+import pandas as pd
+import streamlit as st
+
+con = duckdb.connect(database="data/exercices_sql_tables.duckdb", read_only=False)
+
+
+with st.sidebar:
+    theme = st.selectbox(
+        "What would you like to review?",
+        ["cross_joins", "GroupBy", "window_functions"],
+        index=None,
+        placeholder="Select a theme: ",
+    )
+    st.write("You selected:", theme)
+
+    exercise = con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'").df().sort_values("last_reviewed").reset_index()
+    st.write(exercise)
+
+    if not exercise.empty:
+        exercise_name = exercise.loc[0, "exercise_name"]
+    else:
+        # Gérer le cas où le DataFrame est vide
+        print("Le DataFrame 'exercise' est vide.")
+        
+    with open(f"answers/{exercise_name}.sql", "r") as f:
+        answer = f.read()
+
+>>>>>>> c9dc1ee0f563aa3337d0a5366cbdc375a071c511
     # Dataframe de résultat, prendre cette query et la mettre dans Duckdb SQL
     solution_df = con.execute(answer).df()
 
