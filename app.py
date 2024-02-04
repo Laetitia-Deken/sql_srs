@@ -1,5 +1,4 @@
 # pylint: disable=missing-module-docstring
-<<<<<<< HEAD
 
 import os
 import logging
@@ -41,7 +40,6 @@ with st.sidebar:
     with open(f"answers/{exercise_name}.sql", "r") as f:
         answer = f.read()
 
-=======
 import io
 
 import duckdb
@@ -65,14 +63,12 @@ with st.sidebar:
 
     if not exercise.empty:
         exercise_name = exercise.loc[0, "exercise_name"]
-    else:
-        # Gérer le cas où le DataFrame est vide
+    else  # Gérer le cas où le DataFrame est vide
         print("Le DataFrame 'exercise' est vide.")
         
     with open(f"answers/{exercise_name}.sql", "r") as f:
         answer = f.read()
 
->>>>>>> c9dc1ee0f563aa3337d0a5366cbdc375a071c511
     # Dataframe de résultat, prendre cette query et la mettre dans Duckdb SQL
     solution_df = con.execute(answer).df()
 
