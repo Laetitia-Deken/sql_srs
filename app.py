@@ -63,7 +63,7 @@ with st.sidebar:
 
     if not exercise.empty:
         exercise_name = exercise.loc[0, "exercise_name"]
-    else  # Gérer le cas où le DataFrame est vide
+    else:  # Gérer le cas où le DataFrame est vide
         print("Le DataFrame 'exercise' est vide.")
         
     with open(f"answers/{exercise_name}.sql", "r") as f:
