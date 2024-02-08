@@ -1,4 +1,45 @@
 # pylint: disable=missing-module-docstring
+
+import os
+import logging
+import duckdb
+import streamlit as st
+from datetime import date, timedelta
+
+if "data" not in os.listdir():
+    print("creating folder data")
+    logging.error(os.listdir())
+    logging.error("creating folder data")
+    os.mkdir("data")
+
+if "exercises_sql_tables.duckdb" not in os.listdir("data"):
+    exec(open("init_db.py").read())
+    # subprocess.run(["python", "init_db.py"])
+
+con = duckdb.connect(database="data/exercices_sql_tables.duckdb", read_only=False)
+
+
+with st.sidebar:
+    theme = st.selectbox(
+        "What would you like to review?",
+        ["cross_joins", "GroupBy", "window_functions"],
+        index=None,
+        placeholder="Select a theme: ",
+    )
+    st.write("You selected:", theme)
+
+    exercise = con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'").df().sort_values("last_reviewed").reset_index()
+    st.write(exercise)
+
+    if not exercise.empty:
+        exercise_name = exercise.loc[0, "exercise_name"]
+    else:
+        # Gérer le cas où le DataFrame est vide
+        print("Le DataFrame 'exercise' est vide.")
+        
+    with open(f"answers/{exercise_name}.sql", "r") as f:
+        answer = f.read()
+
 import io
 
 import duckdb
@@ -41,6 +82,20 @@ with st.sidebar:
         placeholder="Select a theme: ",
     )
     st.write("You selected:", option)
+
+    exercise = con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'").df().sort_values("last_reviewed").reset_index()
+    st.write(exercise)
+
+    if not exercise.empty:
+        exercise_name = exercise.loc[0, "exercise_name"]
+    else:  # Gérer le cas où le DataFrame est vide
+        print("Le DataFrame 'exercise' est vide.")
+        
+    with open(f"answers/{exercise_name}.sql", "r") as f:
+        answer = f.read()
+
+    # Dataframe de résultat, prendre cette query et la mettre dans Duckdb SQL
+    solution_df = con.execute(answer).df()
 
 
 st.header("Enter your code: ")
